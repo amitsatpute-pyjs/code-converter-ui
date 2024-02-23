@@ -1,18 +1,27 @@
-import { useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { getConvertedCode, getResult } from "../core/service"
+import { SocketContext } from "../core/context/socket"
 
-const timer = (ms: any) => new Promise(res => setTimeout(res, ms))
+// const timer = (ms: any) => new Promise(res => setTimeout(res, ms))
 
 const Dashboard = () => {
 
-    const [taskStatus, setTaskStatus] = useState("")
+    // const [taskStatus, setTaskStatus] = useState("")
     const [taskResult, setTaskResult] = useState("")
     const [loading, setLoading] = useState(false)
     const [langFrom, setLangFrom] = useState("")
     const [langTo, setLangTo] = useState("")
     const [code, setCode] = useState("")
+    const [sktId, setSoktId] = useState("")
+    const socket = useContext(SocketContext);
+   
 
-
+    useEffect(() => {
+        socket.on(sktId, (data: any) => {            
+            setTaskResult(data.task_result)                       
+            setLoading(false)
+        })
+    }, [sktId])
 
     const handleClick = async () => {
         const body = {
@@ -25,22 +34,23 @@ const Dashboard = () => {
         setTaskResult("")
         const data = await getConvertedCode(body)
         console.log("+++", data)
-        try {
-            while (taskStatus == "PENDING" || taskStatus == "") {
-                const resp = await getResult(data.task_id)
-                setTaskStatus(resp.task_status)
-                if (resp.task_status != "PENDING") {
-                    setTaskResult(resp.task_result)
-                    setTaskStatus("PENDING")
-                    setLoading(false)
-                    break
-                }
-                await timer(2000)
-            }
+        setSoktId(data.task_id)
+        // try {
+        //     while (taskStatus == "PENDING" || taskStatus == "") {
+        //         const resp = await getResult(data.task_id)
+        //         setTaskStatus(resp.task_status)
+        //         if (resp.task_status != "PENDING") {
+        //             setTaskResult(resp.task_result)
+        //             setTaskStatus("PENDING")
+        //             setLoading(false)
+        //             break
+        //         }
+        //         await timer(2000)
+        //     }
 
-        } catch (e: any) {
-            console.log(e)
-        }
+        // } catch (e: any) {
+        //     console.log(e)
+        // }
     }
 
     return (
